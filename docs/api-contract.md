@@ -4,6 +4,7 @@ Swagger UI:
 - `GET /docs`
 - Raw OpenAPI JSON: `GET /openapi.json`
 - Export file for sharing: `npm run docs:export` (writes `docs/openapi.json`)
+- IoT beginner guide: `docs/iot-machine-guide-beginner.md`
 
 ## GET /
 Response `200`
