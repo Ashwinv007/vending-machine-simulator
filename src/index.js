@@ -15,7 +15,9 @@ const io = new Server(server, {
 
 registerMachineSocket(io);
 
-server.listen(env.PORT, () => {
-  console.log(`API server listening on port ${env.PORT}`);
+const host = process.env.HOST ?? "0.0.0.0";
+
+server.listen(env.PORT, host, () => {
+  console.log(`API server listening on ${host}:${env.PORT}`);
   console.log(`Database mode: ${databaseMode}`);
 });
