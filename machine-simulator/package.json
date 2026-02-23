@@ -1,0 +1,16 @@
+{
+  "name": "machine-simulator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Socket.IO machine simulator for vending backend",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node src/index.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "socket.io-client": "^4.8.1"
+  }
+}
