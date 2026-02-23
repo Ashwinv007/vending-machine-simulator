@@ -12,6 +12,14 @@ import { asyncHandler } from "../utils/async-handler.js";
 export function createRouter({ webDir }) {
   const router = express.Router();
 
+  router.get("/", (_req, res) => {
+    res.status(200).json({
+      ok: true,
+      service: "vending-machine-simulator",
+      ts: Date.now()
+    });
+  });
+
   router.get("/health", (_req, res) => {
     res.status(200).json({
       ok: true,

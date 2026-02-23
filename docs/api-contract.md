@@ -5,6 +5,16 @@ Swagger UI:
 - Raw OpenAPI JSON: `GET /openapi.json`
 - Export file for sharing: `npm run docs:export` (writes `docs/openapi.json`)
 
+## GET /
+Response `200`
+```json
+{
+  "ok": true,
+  "service": "vending-machine-simulator",
+  "ts": 1730000000000
+}
+```
+
 ## POST /orders/create
 Request
 ```json
