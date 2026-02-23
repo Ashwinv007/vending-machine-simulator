@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Vending Checkout</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Work+Sans:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/web/buy.css" />
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  </head>
+  <body>
+    <main class="stage">
+      <section class="checkout-card">
+        <header class="header-row">
+          <p class="eyebrow">Vending Machine Checkout</p>
+          <span id="machine-status" class="machine-status">Checking...</span>
+        </header>
+
+        <h1 class="title">Grab Your Kit</h1>
+
+        <div class="machine-row">
+          <p>Machine</p>
+          <strong id="machine-id">--</strong>
+        </div>
+
+        <div class="price-row">
+          <p>Payable Amount</p>
+          <strong id="amount">Rs 20</strong>
+        </div>
+
+        <button id="pay-btn" class="pay-btn" type="button">Pay Now</button>
+
+        <p id="message" class="message">Ready when you are.</p>
+      </section>
+    </main>
+
+    <script type="module" src="/web/buy.js"></script>
+  </body>
+</html>

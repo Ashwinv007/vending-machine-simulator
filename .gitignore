@@ -1,0 +1,7 @@
+node_modules/
+qr/
+npm-debug.log*
+.DS_Store
+service_account.json
+service_account*.json
+*service-account*.json

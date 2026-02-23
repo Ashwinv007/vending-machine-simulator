@@ -1,17 +1,32 @@
 {
   "name": "vending-simulator",
-  "type": "module",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "type": "module",
+  "description": "MVP backend + machine simulator for QR vending flow",
+  "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/index.js",
+    "dev": "node src/index.js",
+    "machine": "node machine.js",
+    "qr:generate": "node scripts/generate-qr.js",
+    "test": "echo \"No automated tests yet\""
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "vending",
+    "razorpay",
+    "firebase",
+    "socket.io"
+  ],
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^17.3.1",
-    "firebase": "^12.9.0"
+    "express": "^4.21.2",
+    "firebase-admin": "^13.0.2",
+    "nanoid": "^5.1.5",
+    "qrcode": "^1.5.4",
+    "razorpay": "^2.9.6",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
   }
 }
