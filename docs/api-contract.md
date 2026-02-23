@@ -10,10 +10,16 @@ Response `200`
 ```json
 {
   "ok": true,
-  "service": "vending-machine-simulator",
+  "databaseMode": "admin",
   "ts": 1730000000000
 }
 ```
+
+Health aliases returning same payload:
+- `GET /health`
+- `GET /healthz`
+- `GET /ready`
+- `GET /live`
 
 ## POST /orders/create
 Request
