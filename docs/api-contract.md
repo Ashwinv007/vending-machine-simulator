@@ -1,5 +1,10 @@
 # API Contract
 
+Swagger UI:
+- `GET /docs`
+- Raw OpenAPI JSON: `GET /openapi.json`
+- Export file for sharing: `npm run docs:export` (writes `docs/openapi.json`)
+
 ## POST /orders/create
 Request
 ```json
@@ -63,6 +68,30 @@ Response `200`
   "status": "ONLINE",
   "lastSeenAt": 1730000000000,
   "socketConnected": true
+}
+```
+
+## GET /machine/socket-contract
+Response `200`
+```json
+{
+  "transport": "socket.io",
+  "namespace": "/",
+  "protocolVersion": 1
+}
+```
+
+## GET /orders/:orderId
+Response `200`
+```json
+{
+  "orderId": "ORD_XXXXXXXXXX",
+  "machineId": "M01",
+  "status": "DISPENSING",
+  "amount": 299,
+  "currency": "INR",
+  "failureCode": null,
+  "updatedAt": 1730000000000
 }
 ```
 

@@ -2,13 +2,14 @@
   "name": "vending-simulator",
   "version": "1.0.0",
   "type": "module",
-  "description": "MVP backend + machine simulator for QR vending flow",
+  "description": "MVP backend for QR vending flow",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
     "dev": "node src/index.js",
-    "machine": "node machine.js",
+    "machine": "npm --prefix machine-simulator run start",
     "qr:generate": "node scripts/generate-qr.js",
+    "docs:export": "node scripts/export-openapi.js",
     "test": "echo \"No automated tests yet\""
   },
   "keywords": [
@@ -26,7 +27,6 @@
     "nanoid": "^5.1.5",
     "qrcode": "^1.5.4",
     "razorpay": "^2.9.6",
-    "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1"
+    "socket.io": "^4.8.1"
   }
 }

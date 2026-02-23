@@ -2,6 +2,7 @@ node_modules/
 qr/
 npm-debug.log*
 .DS_Store
+machine-simulator/.env
 service_account.json
 service_account*.json
 *service-account*.json

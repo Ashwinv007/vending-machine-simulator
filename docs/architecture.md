@@ -9,6 +9,7 @@ Single backend orchestrator for:
 
 ## Components
 - HTTP API (`src/routes` + module controllers)
+- Swagger/OpenAPI docs (`/docs`, `/openapi.json`)
 - Socket.IO machine gateway (`src/modules/machines/machine.socket.js`)
 - Order domain (`src/modules/orders`)
 - Payment domain (`src/modules/payments`)
@@ -23,6 +24,12 @@ Single backend orchestrator for:
 6. Backend verifies signature, marks order `PAID`, emits `machine:dispense`.
 7. Machine emits `machine:done` with `SUCCESS` or `FAILED`.
 8. Backend marks order `COMPLETED` or `FAILED`, and machine `IDLE`.
+9. Frontend polls `GET /orders/:orderId` to reflect final status on the `/buy` page.
+
+## Simulator
+- Backend and simulator are separate projects.
+- Backend code lives in the repository root.
+- Machine simulator lives in `machine-simulator/` with its own `.env`.
 
 ## Data model
 ### machines/{machineId}

@@ -323,11 +323,7 @@ Note: For readability, contiguous lines that implement one atomic action are des
 
 ## 8) Machine simulator side
 
-### `machine.js`
-
-- `1`: one-line entrypoint that boots simulator client.
-
-### `simulator/machine-client.js`
+### `machine-simulator/src/index.js`
 
 - `1-4`: loads env and Socket.IO client.
 - `6-11`: resolves backend URL, machine identity, token, timing knobs.
@@ -342,6 +338,10 @@ Note: For readability, contiguous lines that implement one atomic action are des
   - emits `machine:done`.
 - `63-69`: sends periodic `machine:heartbeat`.
 - `71`: startup log.
+
+### `machine-simulator/.env.example`
+
+- Contains simulator-only vars (`BACKEND_URL`, `MACHINE_ID`, `MACHINE_TOKEN`, heartbeat/dispense/fail-rate knobs).
 
 ## 9) Middleware and common utilities used throughout
 

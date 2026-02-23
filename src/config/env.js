@@ -70,9 +70,5 @@ export const env = {
   MACHINE_SHARED_TOKEN: process.env.MACHINE_SHARED_TOKEN ?? "dev-machine-token",
   MACHINE_TOKENS: parseJsonObject(process.env.MACHINE_TOKENS_JSON, "MACHINE_TOKENS_JSON"),
   MACHINE_HEARTBEAT_TIMEOUT_MS: parseNumber(process.env.MACHINE_HEARTBEAT_TIMEOUT_MS, 30000),
-  MACHINE_HEARTBEAT_CHECK_MS: parseNumber(process.env.MACHINE_HEARTBEAT_CHECK_MS, 5000),
-
-  SIM_BACKEND_URL: process.env.BACKEND_URL ?? `http://localhost:${port}`,
-  SIM_MACHINE_ID: process.env.MACHINE_ID ?? "M01",
-  SIM_DISPENSE_DELAY_MS: parseNumber(process.env.SIM_DISPENSE_DELAY_MS, 2000)
+  MACHINE_HEARTBEAT_CHECK_MS: parseNumber(process.env.MACHINE_HEARTBEAT_CHECK_MS, 5000)
 };

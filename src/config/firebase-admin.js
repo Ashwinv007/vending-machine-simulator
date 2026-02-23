@@ -33,10 +33,6 @@ function parseServiceAccountFile(filePath) {
 }
 
 function resolveServiceAccount() {
-  if (env.FIREBASE_SERVICE_ACCOUNT_PATH) {
-    return parseServiceAccountFile(env.FIREBASE_SERVICE_ACCOUNT_PATH);
-  }
-
   if (env.FIREBASE_SERVICE_ACCOUNT_JSON) {
     return parseServiceAccountJson(env.FIREBASE_SERVICE_ACCOUNT_JSON);
   }
@@ -49,8 +45,12 @@ function resolveServiceAccount() {
     };
   }
 
+  if (env.FIREBASE_SERVICE_ACCOUNT_PATH) {
+    return parseServiceAccountFile(env.FIREBASE_SERVICE_ACCOUNT_PATH);
+  }
+
   throw new Error(
-    "Missing Firebase Admin credentials. Set FIREBASE_SERVICE_ACCOUNT_JSON or all of FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY."
+    "Missing Firebase Admin credentials. Set FIREBASE_SERVICE_ACCOUNT_JSON (recommended), or FIREBASE_PROJECT_ID/FIREBASE_CLIENT_EMAIL/FIREBASE_PRIVATE_KEY, or FIREBASE_SERVICE_ACCOUNT_PATH."
   );
 }
 

@@ -7,9 +7,15 @@ const amountEl = document.getElementById("amount");
 const messageEl = document.getElementById("message");
 const payButton = document.getElementById("pay-btn");
 
+const ORDER_POLL_INTERVAL_MS = 2000;
+const ORDER_POLL_TIMEOUT_MS = 90000;
+
 const state = {
   amount: 20,
-  busy: false
+  busy: false,
+  activeOrderId: null,
+  pollTimeoutId: null,
+  pollDeadlineAt: 0
 };
 
 function setMessage(message, tone = "default") {
@@ -32,6 +38,16 @@ function setBusy(busy) {
   state.busy = busy;
   payButton.disabled = busy;
   payButton.textContent = busy ? "Processing..." : "Pay Now";
+}
+
+function clearOrderPolling() {
+  if (state.pollTimeoutId) {
+    clearTimeout(state.pollTimeoutId);
+  }
+
+  state.pollTimeoutId = null;
+  state.activeOrderId = null;
+  state.pollDeadlineAt = 0;
 }
 
 async function fetchMachineStatus() {
@@ -63,6 +79,17 @@ async function createOrder() {
 
   if (!response.ok) {
     throw new Error(data?.error?.message ?? "Unable to create order");
+  }
+
+  return data;
+}
+
+async function fetchOrderStatus(orderId) {
+  const response = await fetch(`/orders/${encodeURIComponent(orderId)}`);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data?.error?.message ?? "Unable to fetch order status");
   }
 
   return data;
@@ -109,20 +136,37 @@ function openRazorpayCheckout(order) {
           razorpay_signature: response.razorpay_signature
         });
 
-        if (verified.dispatch === "SENT") {
-          setMessage("Payment verified and dispense command sent.", "success");
-          setMachineStatus("DISPENSING");
-        } else {
-          setMessage("Payment verified, machine dispatch pending.", "success");
+        if (verified.status === "COMPLETED") {
+          setMessage("Dispense complete. Please collect your kit.", "success");
+          setMachineStatus("IDLE");
+          setBusy(false);
+          return;
         }
+
+        if (verified.status === "FAILED") {
+          setMessage("Payment verified but dispense failed. Please contact support.", "error");
+          setMachineStatus("IDLE");
+          setBusy(false);
+          return;
+        }
+
+        if (verified.dispatch !== "SENT") {
+          setMessage("Payment verified, machine dispatch pending.", "success");
+          setBusy(false);
+          return;
+        }
+
+        setMessage("Payment verified. Machine is dispensing your kit...", "success");
+        setMachineStatus("DISPENSING");
+        startOrderPolling(order.orderId);
       } catch (error) {
         setMessage(error.message, "error");
-      } finally {
         setBusy(false);
       }
     },
     modal: {
       ondismiss: () => {
+        clearOrderPolling();
         setBusy(false);
         setMessage("Checkout cancelled.");
       }
@@ -133,6 +177,7 @@ function openRazorpayCheckout(order) {
   });
 
   checkout.on("payment.failed", (event) => {
+    clearOrderPolling();
     setBusy(false);
     const reason = event?.error?.description || "Payment failed. Please try again.";
     setMessage(reason, "error");
@@ -141,11 +186,60 @@ function openRazorpayCheckout(order) {
   checkout.open();
 }
 
+function startOrderPolling(orderId) {
+  clearOrderPolling();
+  state.activeOrderId = orderId;
+  state.pollDeadlineAt = Date.now() + ORDER_POLL_TIMEOUT_MS;
+
+  const poll = async () => {
+    if (state.activeOrderId !== orderId) {
+      return;
+    }
+
+    try {
+      const order = await fetchOrderStatus(orderId);
+
+      if (order.status === "DISPENSING") {
+        setMachineStatus("DISPENSING");
+      } else if (order.status === "COMPLETED") {
+        setMachineStatus("IDLE");
+        setMessage("Dispense complete. Please collect your kit.", "success");
+        clearOrderPolling();
+        setBusy(false);
+        return;
+      } else if (order.status === "FAILED") {
+        setMachineStatus("IDLE");
+        const reason = order.failureCode ? ` (${order.failureCode})` : "";
+        setMessage(`Dispense failed${reason}. Please contact support.`, "error");
+        clearOrderPolling();
+        setBusy(false);
+        return;
+      }
+    } catch {
+      setMessage("Unable to refresh order status. Retrying...", "error");
+    }
+
+    if (Date.now() >= state.pollDeadlineAt) {
+      setMessage(`Still waiting for machine confirmation for order ${orderId}.`, "error");
+      clearOrderPolling();
+      setBusy(false);
+      return;
+    }
+
+    state.pollTimeoutId = setTimeout(() => {
+      void poll();
+    }, ORDER_POLL_INTERVAL_MS);
+  };
+
+  void poll();
+}
+
 payButton.addEventListener("click", async () => {
   if (state.busy) {
     return;
   }
 
+  clearOrderPolling();
   setBusy(true);
   setMessage("Creating order...");
 

@@ -1,8 +1,10 @@
 import express from "express";
 import path from "node:path";
 import { databaseMode } from "../config/firebase-admin.js";
+import { machineSocketContract } from "../docs/machine-socket-contract.js";
+import { buildOpenApiSpec } from "../docs/openapi.js";
 import { getMachineStatus } from "../modules/machines/machine.controller.js";
-import { createOrder } from "../modules/orders/order.controller.js";
+import { createOrder, getOrderById } from "../modules/orders/order.controller.js";
 import { isValidMachineId } from "../modules/orders/order.validators.js";
 import { verifyPayment } from "../modules/payments/payment.controller.js";
 import { asyncHandler } from "../utils/async-handler.js";
@@ -16,6 +18,14 @@ export function createRouter({ webDir }) {
       databaseMode,
       ts: Date.now()
     });
+  });
+
+  router.get("/openapi.json", (_req, res) => {
+    res.status(200).json(buildOpenApiSpec());
+  });
+
+  router.get("/docs", (_req, res) => {
+    res.sendFile(path.join(webDir, "swagger.html"));
   });
 
   router.get(
@@ -36,8 +46,12 @@ export function createRouter({ webDir }) {
   );
 
   router.post("/orders/create", asyncHandler(createOrder));
+  router.get("/orders/:orderId", asyncHandler(getOrderById));
   router.post("/payments/verify", asyncHandler(verifyPayment));
   router.get("/machine/status", asyncHandler(getMachineStatus));
+  router.get("/machine/socket-contract", (_req, res) => {
+    res.status(200).json(machineSocketContract);
+  });
 
   return router;
 }
