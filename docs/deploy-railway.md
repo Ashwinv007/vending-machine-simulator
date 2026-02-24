@@ -16,10 +16,12 @@
 3. In Railway service Variables, set:
    - `PORT` (Railway usually injects this automatically).
    - `PUBLIC_BASE_URL` as your Railway public URL.
+   - `UPI_SCANNER_MODE=true`
    - `ORDER_AMOUNT_INR`
    - `ORDER_CURRENCY`
    - `RAZORPAY_KEY_ID`
    - `RAZORPAY_KEY_SECRET`
+   - `RAZORPAY_WEBHOOK_SECRET`
    - `FIREBASE_DATABASE_URL`
    - Firebase Admin credentials:
      - preferred on Railway: `FIREBASE_SERVICE_ACCOUNT_JSON` (full one-line JSON string)
@@ -29,8 +31,13 @@
    - `MACHINE_HEARTBEAT_TIMEOUT_MS`
    - `MACHINE_HEARTBEAT_CHECK_MS`
 4. Redeploy service after setting variables.
-5. Verify endpoints:
+5. Configure Razorpay webhook:
+   - Webhook URL: `https://<your-railway-domain>/webhooks/razorpay`
+   - Secret: exactly same value as `RAZORPAY_WEBHOOK_SECRET`
+   - Events: include `qr_code.credited` (and optionally `payment.captured`).
+6. Verify endpoints:
    - `/health`
+   - `/config/public`
    - `/docs`
    - `/openapi.json`
    - `/machine/socket-contract`

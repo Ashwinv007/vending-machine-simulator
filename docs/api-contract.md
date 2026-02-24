@@ -22,7 +22,17 @@ Health aliases returning same payload:
 - `GET /ready`
 - `GET /live`
 
-## POST /orders/create
+## GET /config/public
+Response `200`
+```json
+{
+  "upiScannerMode": true,
+  "orderAmountInr": 20,
+  "orderCurrency": "INR"
+}
+```
+
+## POST /orders/create (legacy fallback)
 Request
 ```json
 { "machineId": "M01" }
@@ -44,7 +54,7 @@ Errors
 - `400 INVALID_REQUEST`
 - `409 MACHINE_OFFLINE`
 
-## POST /payments/verify
+## POST /payments/verify (legacy fallback)
 Request
 ```json
 {
@@ -76,6 +86,40 @@ Errors
 - `400 INVALID_REQUEST`
 - `400 INVALID_SIGNATURE`
 - `404 ORDER_NOT_FOUND`
+
+## POST /webhooks/razorpay (primary payment confirmation)
+Headers
+- `X-Razorpay-Signature: <hmac_signature>`
+
+Request
+- Raw Razorpay webhook JSON payload (for example `qr_code.credited`).
+
+Response `200`
+```json
+{
+  "ok": true,
+  "paymentId": "pay_xxx",
+  "machineId": "M01",
+  "orderId": "ORD_XXXXXXXXXX",
+  "status": "DISPENSING",
+  "dispatch": "SENT"
+}
+```
+or ignored/idempotent responses:
+```json
+{
+  "ok": true,
+  "ignored": true,
+  "reason": "INVALID_AMOUNT"
+}
+```
+```json
+{
+  "ok": true,
+  "idempotent": true,
+  "paymentId": "pay_xxx"
+}
+```
 
 ## GET /machine/status?machineId=M01
 Response `200`
@@ -113,7 +157,8 @@ Response `200`
 ```
 
 ## GET /buy?machineId=M01
-Returns HTML page.
+Returns HTML page with machine status and scanner instructions.
+In scanner mode, checkout button is disabled and customer pays via printed UPI QR.
 
 ## Socket events
 Client -> Server

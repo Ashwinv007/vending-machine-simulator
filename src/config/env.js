@@ -10,6 +10,23 @@ function requireEnv(name) {
   return value;
 }
 
+function parseBoolean(value, fallback) {
+  if (value === undefined || value === null || value === "") {
+    return fallback;
+  }
+
+  const normalized = String(value).trim().toLowerCase();
+  if (normalized === "true" || normalized === "1" || normalized === "yes") {
+    return true;
+  }
+
+  if (normalized === "false" || normalized === "0" || normalized === "no") {
+    return false;
+  }
+
+  throw new Error(`Invalid boolean value: ${value}`);
+}
+
 function parseNumber(value, fallback) {
   if (value === undefined || value === null || value === "") {
     return fallback;
@@ -48,17 +65,24 @@ function normalizePrivateKey(value) {
 }
 
 const port = parseNumber(process.env.PORT, 3000);
+const upiScannerMode = parseBoolean(process.env.UPI_SCANNER_MODE, true);
+const orderAmountInr = parseNumber(process.env.ORDER_AMOUNT_INR, 20);
 
 export const env = {
   NODE_ENV: process.env.NODE_ENV ?? "development",
   PORT: port,
   PUBLIC_BASE_URL: process.env.PUBLIC_BASE_URL ?? `http://localhost:${port}`,
+  UPI_SCANNER_MODE: upiScannerMode,
 
-  ORDER_AMOUNT_INR: parseNumber(process.env.ORDER_AMOUNT_INR, 20),
+  ORDER_AMOUNT_INR: orderAmountInr,
+  ORDER_AMOUNT_PAISE: Math.round(orderAmountInr * 100),
   ORDER_CURRENCY: process.env.ORDER_CURRENCY ?? "INR",
 
   RAZORPAY_KEY_ID: requireEnv("RAZORPAY_KEY_ID"),
   RAZORPAY_KEY_SECRET: requireEnv("RAZORPAY_KEY_SECRET"),
+  RAZORPAY_WEBHOOK_SECRET: upiScannerMode
+    ? requireEnv("RAZORPAY_WEBHOOK_SECRET")
+    : process.env.RAZORPAY_WEBHOOK_SECRET,
 
   FIREBASE_DATABASE_URL: requireEnv("FIREBASE_DATABASE_URL"),
   FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,

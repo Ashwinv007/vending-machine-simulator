@@ -1,9 +1,13 @@
 import { MACHINE_STATUS } from "../../config/constants.js";
-import { rtdbGet, rtdbUpdate } from "../../config/firebase-admin.js";
+import { rtdbGet, rtdbSet, rtdbUpdate } from "../../config/firebase-admin.js";
 import { nowMs } from "../../utils/time.js";
 
 function machinePath(machineId) {
   return `machines/${machineId}`;
+}
+
+function qrCodePath(qrCodeId) {
+  return `qrCodeToMachine/${qrCodeId}`;
 }
 
 export async function markMachineConnected(machineId) {
@@ -40,4 +44,18 @@ export async function setMachineStatus(machineId, status, socketConnected = true
 
 export async function getMachine(machineId) {
   return rtdbGet(machinePath(machineId));
+}
+
+export async function setMachinePaymentProfile(machineId, profile) {
+  await rtdbUpdate(machinePath(machineId), {
+    paymentProfile: profile
+  });
+}
+
+export async function mapQrCodeToMachine(qrCodeId, machineId) {
+  await rtdbSet(qrCodePath(qrCodeId), machineId);
+}
+
+export async function getMachineIdByQrCodeId(qrCodeId) {
+  return rtdbGet(qrCodePath(qrCodeId));
 }

@@ -27,6 +27,7 @@ export function registerMachineSocket(io) {
         }
 
         await machineService.handleConnect(socket, machineId);
+        await orderService.tryDispatchNextPending(machineId);
         ack(ackFn, { ok: true, machineId });
       } catch (error) {
         ack(ackFn, {
@@ -48,6 +49,7 @@ export function registerMachineSocket(io) {
         }
 
         await machineService.handleHeartbeat(socket, socket.data.machineId);
+        await orderService.tryDispatchNextPending(socket.data.machineId);
         ack(ackFn, { ok: true, ts: Date.now() });
       } catch (error) {
         ack(ackFn, {
@@ -80,6 +82,7 @@ export function registerMachineSocket(io) {
         }
 
         await machineService.setMachineIdle(machineId);
+        await orderService.tryDispatchNextPending(machineId);
         ack(ackFn, { ok: true, orderId });
       } catch (error) {
         ack(ackFn, {

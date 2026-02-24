@@ -7,3 +7,4 @@ machine-simulator/.env
 service_account.json
 service_account*.json
 *service-account*.json
+rzp-key.csv

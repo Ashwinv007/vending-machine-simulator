@@ -9,13 +9,17 @@ const payButton = document.getElementById("pay-btn");
 
 const ORDER_POLL_INTERVAL_MS = 2000;
 const ORDER_POLL_TIMEOUT_MS = 90000;
+const MACHINE_STATUS_POLL_INTERVAL_MS = 5000;
 
 const state = {
   amount: 20,
+  currency: "INR",
+  upiScannerMode: true,
   busy: false,
   activeOrderId: null,
   pollTimeoutId: null,
-  pollDeadlineAt: 0
+  pollDeadlineAt: 0,
+  machineStatusIntervalId: null
 };
 
 function setMessage(message, tone = "default") {
@@ -63,7 +67,34 @@ async function fetchMachineStatus() {
   if (data.status === "OFFLINE") {
     payButton.disabled = true;
     setMessage("Machine is offline right now. Please try again shortly.", "error");
+  } else if (!state.upiScannerMode && !state.busy) {
+    payButton.disabled = false;
   }
+}
+
+function startMachineStatusPolling() {
+  if (state.machineStatusIntervalId) {
+    clearInterval(state.machineStatusIntervalId);
+  }
+
+  state.machineStatusIntervalId = setInterval(() => {
+    void fetchMachineStatus().catch(() => {});
+  }, MACHINE_STATUS_POLL_INTERVAL_MS);
+}
+
+async function fetchPublicConfig() {
+  const response = await fetch("/config/public");
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error("Unable to load checkout configuration");
+  }
+
+  state.amount = Number(data.orderAmountInr ?? state.amount);
+  state.currency = String(data.orderCurrency ?? state.currency);
+  state.upiScannerMode = Boolean(data.upiScannerMode);
+
+  amountEl.textContent = `Rs ${state.amount}`;
 }
 
 async function createOrder() {
@@ -235,6 +266,14 @@ function startOrderPolling(orderId) {
 }
 
 payButton.addEventListener("click", async () => {
+  if (state.upiScannerMode) {
+    setMessage(
+      "Use GPay/PhonePe scanner to scan the printed UPI QR on machine. Dispense starts automatically after payment.",
+      "success"
+    );
+    return;
+  }
+
   if (state.busy) {
     return;
   }
@@ -266,9 +305,26 @@ function init() {
 
   machineIdEl.textContent = machineId;
   amountEl.textContent = `Rs ${state.amount}`;
-  void fetchMachineStatus().catch((error) => {
-    setMessage(error.message, "error");
-  });
+
+  void (async () => {
+    try {
+      await fetchPublicConfig();
+
+      if (state.upiScannerMode) {
+        payButton.disabled = true;
+        payButton.textContent = "Use UPI Scanner";
+        setMessage(
+          "Scan printed UPI QR on machine using GPay/PhonePe. Machine will dispense automatically after payment.",
+          "success"
+        );
+      }
+
+      await fetchMachineStatus();
+      startMachineStatusPolling();
+    } catch (error) {
+      setMessage(error.message, "error");
+    }
+  })();
 }
 
 init();

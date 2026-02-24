@@ -9,7 +9,7 @@ export function buildOpenApiSpec() {
       title: "Vending Machine MVP API",
       version: "1.0.0",
       description:
-        "HTTP API contract for QR -> Node -> Razorpay -> RTDB -> Socket machine flow. Includes machine socket contract for IoT integration."
+        "HTTP API contract for printed UPI scanner QR -> Razorpay webhook -> RTDB -> Socket machine flow. Includes machine socket contract for IoT integration."
     },
     servers: [
       {
@@ -21,6 +21,7 @@ export function buildOpenApiSpec() {
       { name: "Checkout", description: "QR entry page for payment flow." },
       { name: "Orders", description: "Order creation and status read APIs." },
       { name: "Payments", description: "Razorpay verify and dispatch APIs." },
+      { name: "Webhooks", description: "Provider webhook ingestion APIs." },
       { name: "Machines", description: "Machine presence and socket integration contract." }
     ],
     paths: {
@@ -34,6 +35,22 @@ export function buildOpenApiSpec() {
               content: {
                 "application/json": {
                   schema: { $ref: "#/components/schemas/HealthResponse" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/config/public": {
+        get: {
+          tags: ["System"],
+          summary: "Public checkout configuration",
+          responses: {
+            200: {
+              description: "Public config flags and fixed amount",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/PublicConfigResponse" }
                 }
               }
             }
@@ -79,7 +96,10 @@ export function buildOpenApiSpec() {
       "/orders/create": {
         post: {
           tags: ["Orders"],
-          summary: "Create payment order",
+          summary: "Create payment order (legacy fallback)",
+          deprecated: true,
+          description:
+            "Legacy checkout endpoint retained for rollback. Primary scanner flow uses printed UPI QR and /webhooks/razorpay.",
           requestBody: {
             required: true,
             content: {
@@ -152,7 +172,10 @@ export function buildOpenApiSpec() {
       "/payments/verify": {
         post: {
           tags: ["Payments"],
-          summary: "Verify Razorpay payment and dispatch machine",
+          summary: "Verify Razorpay payment and dispatch machine (legacy fallback)",
+          deprecated: true,
+          description:
+            "Legacy checkout verification endpoint retained for rollback. Primary scanner flow uses printed UPI QR and /webhooks/razorpay.",
           requestBody: {
             required: true,
             content: {
@@ -188,6 +211,52 @@ export function buildOpenApiSpec() {
             },
             409: {
               description: "Payment/order conflict",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ErrorResponse" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/webhooks/razorpay": {
+        post: {
+          tags: ["Webhooks"],
+          summary: "Razorpay webhook receiver for scanner QR payments",
+          description:
+            "Primary payment confirmation path for printed UPI QR scanner mode. Verifies X-Razorpay-Signature and dispatches machine.",
+          parameters: [
+            {
+              name: "X-Razorpay-Signature",
+              in: "header",
+              required: true,
+              schema: { type: "string" },
+              example: "a6d90f6f5e7c..."
+            }
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  additionalProperties: true
+                }
+              }
+            }
+          },
+          responses: {
+            200: {
+              description: "Webhook handled or ignored",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/RazorpayWebhookResponse" }
+                }
+              }
+            },
+            401: {
+              description: "Invalid webhook signature",
               content: {
                 "application/json": {
                   schema: { $ref: "#/components/schemas/ErrorResponse" }
@@ -266,6 +335,15 @@ export function buildOpenApiSpec() {
             ok: { type: "boolean", example: true },
             databaseMode: { type: "string", example: "admin" },
             ts: { type: "integer", format: "int64", example: 1730000000000 }
+          }
+        },
+        PublicConfigResponse: {
+          type: "object",
+          required: ["upiScannerMode", "orderAmountInr", "orderCurrency"],
+          properties: {
+            upiScannerMode: { type: "boolean", example: true },
+            orderAmountInr: { type: "number", example: 20 },
+            orderCurrency: { type: "string", example: "INR" }
           }
         },
         ErrorResponse: {
@@ -347,6 +425,24 @@ export function buildOpenApiSpec() {
             dispatch: {
               type: "string",
               enum: ["SENT", "PENDING"],
+              example: "SENT"
+            }
+          }
+        },
+        RazorpayWebhookResponse: {
+          type: "object",
+          properties: {
+            ok: { type: "boolean", example: true },
+            ignored: { type: "boolean", example: false },
+            idempotent: { type: "boolean", example: false },
+            reason: { type: "string", example: "SENT" },
+            paymentId: { type: "string", example: "pay_Q123456789" },
+            machineId: { type: "string", example: "M01" },
+            orderId: { type: "string", example: "ORD_ABC123XYZ" },
+            status: { $ref: "#/components/schemas/OrderStatus" },
+            dispatch: {
+              type: "string",
+              enum: ["SENT", "QUEUED", "NOT_SENT", "ALREADY_PROCESSED"],
               example: "SENT"
             }
           }

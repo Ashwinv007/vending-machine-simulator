@@ -15,7 +15,14 @@ export function createApp() {
 
   app.disable("x-powered-by");
   app.use(cors());
-  app.use(express.json({ limit: "100kb" }));
+  app.use(
+    express.json({
+      limit: "100kb",
+      verify: (req, _res, buffer) => {
+        req.rawBody = buffer.toString("utf8");
+      }
+    })
+  );
   app.use(validateJson);
 
   app.use("/web", express.static(webDir));

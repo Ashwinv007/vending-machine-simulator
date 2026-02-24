@@ -9,6 +9,7 @@
     "dev": "node src/index.js",
     "machine": "npm --prefix machine-simulator run start",
     "qr:generate": "node scripts/generate-qr.js",
+    "qr:provision": "node scripts/provision-upi-qr.js",
     "docs:export": "node scripts/export-openapi.js",
     "test": "echo \"No automated tests yet\""
   },

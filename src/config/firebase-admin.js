@@ -105,3 +105,19 @@ export async function rtdbSet(path, value) {
 export async function rtdbUpdate(path, value) {
   await adminDb.ref(path).update(value);
 }
+
+export async function rtdbCreateIfAbsent(path, value) {
+  const ref = adminDb.ref(path);
+  const result = await ref.transaction((current) => {
+    if (current !== null && current !== undefined) {
+      return;
+    }
+
+    return value;
+  });
+
+  return {
+    created: result.committed,
+    snapshotValue: result.snapshot.exists() ? result.snapshot.val() : null
+  };
+}

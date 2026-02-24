@@ -166,7 +166,7 @@ async function runDispenseCycle() {
 2. Start machine client.
 3. Confirm backend shows machine online:
    `GET /machine/status?machineId=M01`
-4. Trigger one payment flow from `/buy?machineId=M01`.
+4. Trigger one real scanner payment by scanning printed machine UPI QR from GPay/PhonePe.
 5. Confirm machine receives `machine:dispense`.
 6. Confirm machine sends `machine:done`.
 7. Confirm order status reaches `COMPLETED` (or `FAILED`).

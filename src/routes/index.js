@@ -1,5 +1,6 @@
 import express from "express";
 import path from "node:path";
+import { env } from "../config/env.js";
 import { databaseMode } from "../config/firebase-admin.js";
 import { machineSocketContract } from "../docs/machine-socket-contract.js";
 import { buildOpenApiSpec } from "../docs/openapi.js";
@@ -7,6 +8,7 @@ import { getMachineStatus } from "../modules/machines/machine.controller.js";
 import { createOrder, getOrderById } from "../modules/orders/order.controller.js";
 import { isValidMachineId } from "../modules/orders/order.validators.js";
 import { verifyPayment } from "../modules/payments/payment.controller.js";
+import { handleRazorpayWebhook } from "../modules/payments/webhook.controller.js";
 import { asyncHandler } from "../utils/async-handler.js";
 
 export function createRouter({ webDir }) {
@@ -41,6 +43,14 @@ export function createRouter({ webDir }) {
     res.status(200).json(buildOpenApiSpec());
   });
 
+  router.get("/config/public", (_req, res) => {
+    res.status(200).json({
+      upiScannerMode: env.UPI_SCANNER_MODE,
+      orderAmountInr: env.ORDER_AMOUNT_INR,
+      orderCurrency: env.ORDER_CURRENCY
+    });
+  });
+
   router.get("/docs", (_req, res) => {
     res.sendFile(path.join(webDir, "swagger.html"));
   });
@@ -65,6 +75,7 @@ export function createRouter({ webDir }) {
   router.post("/orders/create", asyncHandler(createOrder));
   router.get("/orders/:orderId", asyncHandler(getOrderById));
   router.post("/payments/verify", asyncHandler(verifyPayment));
+  router.post("/webhooks/razorpay", asyncHandler(handleRazorpayWebhook));
   router.get("/machine/status", asyncHandler(getMachineStatus));
   router.get("/machine/socket-contract", (_req, res) => {
     res.status(200).json(machineSocketContract);
