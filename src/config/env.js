@@ -36,7 +36,7 @@ function parseNumber(value, fallback) {
   if (!Number.isFinite(parsed)) {
     throw new Error(`Invalid number value: ${value}`);
   }
-
+  
   return parsed;
 }
 
