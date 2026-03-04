@@ -559,4 +559,4 @@ For firmware engineers connecting real hardware, only four Socket.IO events are 
 
 ## License
 
-ISC
+MIT

@@ -19,7 +19,7 @@
     "firebase",
     "socket.io"
   ],
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^17.3.1",
