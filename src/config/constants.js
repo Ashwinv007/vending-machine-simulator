@@ -17,5 +17,7 @@ export const SOCKET_EVENTS = Object.freeze({
   CONNECT: "machine:connect",
   HEARTBEAT: "machine:heartbeat",
   DISPENSE: "machine:dispense",
-  DONE: "machine:done"
+  DONE: "machine:done",
+  WELCOME: "machine:welcome",
+  AUTHENTICATED: "machine:authenticated"
 });

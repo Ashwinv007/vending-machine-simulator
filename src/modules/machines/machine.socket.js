@@ -14,9 +14,13 @@ export function registerMachineSocket(io) {
   machineService.attachIo(io);
 
   io.on("connection", (socket) => {
+    console.log(`[server] socket connected: ${socket.id}`);
+    socket.emit(SOCKET_EVENTS.WELCOME, { ts: Date.now(), socketId: socket.id });
+
     socket.on(SOCKET_EVENTS.CONNECT, async (payload = {}, ackFn) => {
       try {
         const { machineId, token } = payload;
+        console.log(`[server] machine:connect from ${machineId ?? "unknown"} (socket: ${socket.id})`);
 
         if (!isValidMachineId(machineId)) {
           throw new AppError(400, "INVALID_MACHINE_ID", "machineId is invalid");
@@ -28,8 +32,11 @@ export function registerMachineSocket(io) {
 
         await machineService.handleConnect(socket, machineId);
         await orderService.tryDispatchNextPending(machineId);
+        console.log(`[server] machine ${machineId} authenticated (socket: ${socket.id})`);
         ack(ackFn, { ok: true, machineId });
+        socket.emit(SOCKET_EVENTS.AUTHENTICATED, { ok: true, machineId, ts: Date.now() });
       } catch (error) {
+        console.error(`[server] machine:connect failed (socket: ${socket.id}):`, error.message);
         ack(ackFn, {
           ok: false,
           error: {
@@ -45,6 +52,7 @@ export function registerMachineSocket(io) {
     socket.on(SOCKET_EVENTS.HEARTBEAT, async (_payload = {}, ackFn) => {
       try {
         if (!socket.data.machineId) {
+          console.warn(`[server] heartbeat rejected — not authenticated (socket: ${socket.id})`);
           throw new AppError(400, "MACHINE_NOT_REGISTERED", "machine:connect must run first");
         }
 
@@ -95,7 +103,8 @@ export function registerMachineSocket(io) {
       }
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", (reason) => {
+      console.log(`[server] socket disconnected: ${socket.id} (machine: ${socket.data.machineId ?? "unauthenticated"}, reason: ${reason})`);
       void machineService.handleDisconnect(socket);
     });
   });
