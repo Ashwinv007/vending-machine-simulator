@@ -1,4 +1,4 @@
-import { MACHINE_STATUS, ORDER_STATUS } from "../config/constants.js";
+import { LOG_LEVELS, MACHINE_STATUS, ORDER_STATUS } from "../config/constants.js";
 import { env } from "../config/env.js";
 import { machineSocketContract } from "./machine-socket-contract.js";
 
@@ -266,6 +266,57 @@ export function buildOpenApiSpec() {
           }
         }
       },
+      "/machine/logs": {
+        post: {
+          tags: ["Machines"],
+          summary: "Store a machine log entry",
+          description:
+            "Called by the machine firmware on every log event. Each request stores a single entry in Firebase RTDB under machine_logs/{machineId}.",
+          parameters: [
+            {
+              name: "x-machine-token",
+              in: "header",
+              required: true,
+              schema: { type: "string" },
+              example: "dev-machine-token"
+            }
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/MachineLogRequest" }
+              }
+            }
+          },
+          responses: {
+            201: {
+              description: "Log entry stored",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/MachineLogResponse" }
+                }
+              }
+            },
+            400: {
+              description: "Invalid request body",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ErrorResponse" }
+                }
+              }
+            },
+            401: {
+              description: "Missing or invalid machine token",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ErrorResponse" }
+                }
+              }
+            }
+          }
+        }
+      },
       "/machine/status": {
         get: {
           tags: ["Machines"],
@@ -460,6 +511,61 @@ export function buildOpenApiSpec() {
               example: 1730000000000
             },
             socketConnected: { type: "boolean", example: true }
+          }
+        },
+        MachineLogRequest: {
+          type: "object",
+          required: ["machineId", "level", "event", "ts"],
+          properties: {
+            machineId: {
+              type: "string",
+              pattern: "^[A-Za-z0-9_-]{2,32}$",
+              example: "M01"
+            },
+            level: {
+              type: "string",
+              enum: Object.values(LOG_LEVELS),
+              example: LOG_LEVELS.ERROR
+            },
+            event: {
+              type: "string",
+              description: "Free-form event identifier from firmware, e.g. BOOT, MOTOR_JAM, DISPENSE_START",
+              example: "MOTOR_JAM"
+            },
+            ts: {
+              type: "integer",
+              format: "int64",
+              description: "Device clock unix timestamp in milliseconds",
+              example: 1743580800000
+            },
+            message: {
+              type: "string",
+              description: "Optional human-readable description",
+              example: "Slot 3 motor stalled after 3s"
+            },
+            orderId: {
+              type: "string",
+              description: "Optional — set when the log is related to a specific order",
+              example: "ORD_A1B2C3D4E5"
+            },
+            data: {
+              type: "object",
+              description: "Optional flat key-value context. Do not use arrays.",
+              example: { slot: 3, retryCount: 2 },
+              additionalProperties: true
+            }
+          }
+        },
+        MachineLogResponse: {
+          type: "object",
+          required: ["ok", "logId"],
+          properties: {
+            ok: { type: "boolean", example: true },
+            logId: {
+              type: "string",
+              description: "Firebase push ID of the stored log entry",
+              example: "-NyABC123xyzXXXX"
+            }
           }
         },
         MachineSocketContract: {

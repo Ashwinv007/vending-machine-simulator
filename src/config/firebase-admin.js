@@ -121,3 +121,8 @@ export async function rtdbCreateIfAbsent(path, value) {
     snapshotValue: result.snapshot.exists() ? result.snapshot.val() : null
   };
 }
+
+export async function rtdbPush(path, value) {
+  const ref = await adminDb.ref(path).push(value);
+  return ref.key;
+}

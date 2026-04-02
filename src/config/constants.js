@@ -21,3 +21,10 @@ export const SOCKET_EVENTS = Object.freeze({
   WELCOME: "machine:welcome",
   AUTHENTICATED: "machine:authenticated"
 });
+
+export const LOG_LEVELS = Object.freeze({
+  INFO:  "info",
+  WARN:  "warn",
+  ERROR: "error",
+  DEBUG: "debug"
+});

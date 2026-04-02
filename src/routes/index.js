@@ -5,6 +5,7 @@ import { databaseMode } from "../config/firebase-admin.js";
 import { machineSocketContract } from "../docs/machine-socket-contract.js";
 import { buildOpenApiSpec } from "../docs/openapi.js";
 import { getMachineStatus } from "../modules/machines/machine.controller.js";
+import { storeMachineLog } from "../modules/machines/machine-log.controller.js";
 import { createOrder, getOrderById } from "../modules/orders/order.controller.js";
 import { isValidMachineId } from "../modules/orders/order.validators.js";
 import { verifyPayment } from "../modules/payments/payment.controller.js";
@@ -77,6 +78,7 @@ export function createRouter({ webDir }) {
   router.post("/payments/verify", asyncHandler(verifyPayment));
   router.post("/webhooks/razorpay", asyncHandler(handleRazorpayWebhook));
   router.get("/machine/status", asyncHandler(getMachineStatus));
+  router.post("/machine/logs", storeMachineLog);
   router.get("/machine/socket-contract", (_req, res) => {
     res.status(200).json(machineSocketContract);
   });
