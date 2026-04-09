@@ -83,10 +83,14 @@ export function registerMachineSocket(io) {
           throw new AppError(400, "INVALID_ORDER_ID", "orderId is required");
         }
 
+        console.log(`[server] machine:done from ${machineId} orderId=${orderId} result=${result}`);
+
         if (result === "SUCCESS") {
           await orderService.markCompleted(orderId);
+          console.log(`[server] order ${orderId} COMPLETED`);
         } else {
           await orderService.markFailed(orderId, "DISPENSE_FAILED");
+          console.log(`[server] order ${orderId} FAILED`);
         }
 
         await machineService.setMachineIdle(machineId);

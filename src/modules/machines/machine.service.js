@@ -106,6 +106,7 @@ class MachineService {
     }
 
     this.io.to(machine.socketId).emit(SOCKET_EVENTS.DISPENSE, payload);
+    console.log(`[server] machine:dispense → ${machineId} orderId=${payload.orderId}`);
     await machineRepo.setMachineStatus(machineId, MACHINE_STATUS.DISPENSING, true);
     return true;
   }

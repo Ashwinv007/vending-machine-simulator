@@ -66,7 +66,10 @@ class WebhookService {
 
     const { paymentId, qrCodeId, amountPaise, razorpayOrderId } = extractWebhookEntities(payload);
 
+    console.log(`[webhook] received event=${eventName} paymentId=${paymentId ?? "unknown"} qrCodeId=${qrCodeId ?? "none"} amountPaise=${amountPaise}`);
+
     if (!paymentId) {
+      console.log(`[webhook] rejected reason=MISSING_PAYMENT_ID event=${eventName}`);
       return {
         ok: true,
         ignored: true,
@@ -91,6 +94,7 @@ class WebhookService {
 
     if (!reserved.reserved) {
       const existingEvent = reserved.existingEvent ?? (await paymentEventRepo.getPaymentEvent(paymentId));
+      console.log(`[webhook] idempotent paymentId=${paymentId} orderId=${existingEvent.orderId ?? "none"} dispatch=${existingEvent.dispatch ?? "ALREADY_PROCESSED"}`);
       return {
         ok: true,
         idempotent: true,
@@ -101,6 +105,7 @@ class WebhookService {
     }
 
     if (!qrCodeId) {
+      console.log(`[webhook] rejected paymentId=${paymentId} reason=MISSING_QR_CODE_ID`);
       await persistPaymentEvent(paymentId, {
         status: "REJECTED",
         reason: "MISSING_QR_CODE_ID",
@@ -120,6 +125,7 @@ class WebhookService {
     }
 
     if (amountPaise !== env.ORDER_AMOUNT_PAISE) {
+      console.log(`[webhook] rejected paymentId=${paymentId} reason=INVALID_AMOUNT amountPaise=${amountPaise} expected=${env.ORDER_AMOUNT_PAISE}`);
       await persistPaymentEvent(paymentId, {
         status: "REJECTED",
         reason: "INVALID_AMOUNT",
@@ -141,6 +147,7 @@ class WebhookService {
 
     const machineId = await machineRepo.getMachineIdByQrCodeId(qrCodeId);
     if (!machineId) {
+      console.log(`[webhook] rejected paymentId=${paymentId} reason=UNKNOWN_QR_CODE qrCodeId=${qrCodeId}`);
       await persistPaymentEvent(paymentId, {
         status: "REJECTED",
         reason: "UNKNOWN_QR_CODE",
@@ -167,8 +174,12 @@ class WebhookService {
       razorpayOrderId
     });
 
+    console.log(`[webhook] order created orderId=${orderId} machineId=${machineId} paymentId=${paymentId}`);
+
     const dispatchResult = await orderService.tryDispatchNextPending(machineId);
     const dispatch = dispatchResult.dispatched ? "SENT" : "QUEUED";
+
+    console.log(`[webhook] dispatch=${dispatch} orderId=${orderId} machineId=${machineId} reason=${dispatchResult.reason}`);
 
     await persistPaymentEvent(paymentId, {
       status: "PROCESSED",
