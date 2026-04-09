@@ -9,7 +9,9 @@ export function buildOpenApiSpec() {
       title: "Vending Machine MVP API",
       version: "1.0.0",
       description:
-        "HTTP API contract for printed UPI scanner QR -> Razorpay webhook -> RTDB -> Socket machine flow. Includes machine socket contract for IoT integration."
+        "HTTP + Socket.IO API for a UPI QR vending machine. " +
+        "Full payment flow: customer scans printed QR → Razorpay webhook → order created → machine:dispense sent to IoT device via Socket.IO → machine:done received → order closed. " +
+        "See GET /machine/socket-contract for the full IoT Socket.IO event contract including transport guidance, authentication, heartbeat, dispense commands, and testing checklist."
     },
     servers: [
       {
@@ -21,8 +23,22 @@ export function buildOpenApiSpec() {
       { name: "Checkout", description: "QR entry page for payment flow." },
       { name: "Orders", description: "Order creation and status read APIs." },
       { name: "Payments", description: "Razorpay verify and dispatch APIs." },
-      { name: "Webhooks", description: "Provider webhook ingestion APIs." },
-      { name: "Machines", description: "Machine presence and socket integration contract." }
+      {
+        name: "Webhooks",
+        description:
+          "Provider webhook ingestion. " +
+          "POST /webhooks/razorpay is the primary payment path for UPI QR scanner mode. " +
+          "On a valid payment, the server creates a PAID order and immediately emits machine:dispense to the IoT device over Socket.IO. " +
+          "If the machine is offline, the order is queued and dispatched on next reconnect."
+      },
+      {
+        name: "Machines",
+        description:
+          "IoT device management. " +
+          "GET /machine/status — check if a machine is online. " +
+          "POST /machine/logs — ship structured log entries from firmware. " +
+          "GET /machine/socket-contract — full Socket.IO event contract (transport, auth, heartbeat, dispense, done, testing checklist)."
+      }
     ],
     paths: {
       "/health": {
@@ -223,9 +239,14 @@ export function buildOpenApiSpec() {
       "/webhooks/razorpay": {
         post: {
           tags: ["Webhooks"],
-          summary: "Razorpay webhook receiver for scanner QR payments",
+          summary: "Razorpay webhook — payment confirmed, machine:dispense triggered",
           description:
-            "Primary payment confirmation path for printed UPI QR scanner mode. Verifies X-Razorpay-Signature and dispatches machine.",
+            "Primary payment path for UPI QR scanner mode. " +
+            "Verifies X-Razorpay-Signature (HMAC-SHA256). " +
+            "On success: creates a PAID order in RTDB, then immediately emits machine:dispense { type: 'DISPENSE', orderId } to the IoT device via Socket.IO. " +
+            "If the machine is offline or busy, the order is queued (dispatchPending: true) and dispatched automatically when the machine next connects or heartbeats. " +
+            "Supports events: qr_code.credited (primary), payment.captured (fallback). " +
+            "Idempotent — duplicate webhooks for the same paymentId are safely ignored.",
           parameters: [
             {
               name: "X-Razorpay-Signature",
@@ -356,9 +377,18 @@ export function buildOpenApiSpec() {
       "/machine/socket-contract": {
         get: {
           tags: ["Machines"],
-          summary: "Socket.IO machine contract for IoT client",
+          summary: "Full Socket.IO contract for IoT firmware",
           description:
-            "Canonical event contract for machine firmware/simulator integration. Use this for event names, payloads, and ack formats.",
+            "Canonical integration reference for machine firmware. Covers: " +
+            "transport guidance (force WebSocket, avoid polling), " +
+            "authentication (token setup, x-machine-token header), " +
+            "connection sequence (welcome → connect → authenticated → heartbeat loop), " +
+            "all event payloads and ack shapes (machine:connect, machine:heartbeat, machine:done, machine:dispense), " +
+            "full payment → dispense order lifecycle, " +
+            "machine status state machine (ONLINE / DISPENSING / IDLE / OFFLINE), " +
+            "HTTP log endpoint reference (POST /machine/logs), " +
+            "error codes for all socket events, " +
+            "and a testing checklist.",
           responses: {
             200: {
               description: "Socket contract payload",
